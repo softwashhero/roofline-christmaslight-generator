@@ -27,19 +27,21 @@ app.post('/generate-lights', upload.fields([
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ error: 'Server is missing OPENAI_API_KEY environment variable.' });
     }
-    if (!req.files || !req.files.image || !req.files.mask) {
-      return res.status(400).json({ error: 'Both "image" and "mask" files are required.' });
+    if (!req.files || !req.files.image) {
+      return res.status(400).json({ error: 'An "image" file is required.' });
     }
 
     const { model, prompt, size, quality, n } = req.body;
 
     const imageFile = req.files.image[0];
-    const maskFile = req.files.mask[0];
+    const maskFile = req.files.mask ? req.files.mask[0] : null;
 
     const form = new FormData();
     form.append('model', model || 'gpt-image-1.5');
     form.append('image', new Blob([imageFile.buffer], { type: imageFile.mimetype || 'image/png' }), 'photo.png');
-    form.append('mask', new Blob([maskFile.buffer], { type: maskFile.mimetype || 'image/png' }), 'mask.png');
+    if (maskFile) {
+      form.append('mask', new Blob([maskFile.buffer], { type: maskFile.mimetype || 'image/png' }), 'mask.png');
+    }
     form.append('prompt', prompt || '');
     form.append('size', size || '1024x1024');
     form.append('quality', quality || 'medium');
